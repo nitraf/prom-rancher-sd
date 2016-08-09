@@ -1,4 +1,4 @@
-#!/usr/bin/python3.4
+#!/usr/bin/python3
 
 # Copyright 2016 Daniel Dent (https://www.danieldent.com/)
 
@@ -19,17 +19,18 @@ def get_current_services():
 
 
 def is_monitored_service(service):
-    return 'labels' in service and 'com.danieldent.cowhand.prom.port' in service['labels']
+    return 'labels' in service and 'com.prometheus.monitoring' in service['labels'] and service['labels']['com.prometheus.monitoring'] == 'true'
 
 
 def monitoring_config(service):
     return {
-        "targets": [service['primary_ip'] + ':' + service['labels']['com.danieldent.cowhand.prom.port']],
+        "targets": [service['primary_ip'] + ':' + (service['labels']['com.prometheus.port'] if 'com.prometheus.port' in service['labels'] else '8083') ],
         "labels": {
             'instance': service['hostname'],
             'name': service['name'],
             'service_name': service['service_name'],
             'stack_name': service['stack_name'],
+            'metrics_path': service['labels']['com.prometheus.metricspath'] if 'com.prometheus.metricspath' in service['labels'] else '/metrics'
         }
     }
 
@@ -40,6 +41,6 @@ def get_monitoring_config():
 
 if __name__ == '__main__':
     while True:
+        time.sleep(30)
         with open('/prom-rancher-sd-data/rancher.json', 'w') as config_file:
             json.dump(get_monitoring_config(), config_file, indent=2)
-        time.sleep(30)
