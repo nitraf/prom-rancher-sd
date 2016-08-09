@@ -15,8 +15,6 @@ One application running in container will be published in Prom configuration if 
 
 Prometheus will scrape `/metrics` (default value) or the value specified by `com.prometheus.resourcepath` label via HTTP by connecting to the container's primary IP on the 8083 port (default) or on the port specified by the `com.prometheus.port` label.
 
-In this case, the prom-rancher-sd will put in the 
-
 The [Let it Crash](http://c2.com/cgi/wiki?LetItCrash) design used implies that this software should be operated under a process supervisor. Docker and Rancher's automatic container restart facilities are believed adequate.
 
 ## License
