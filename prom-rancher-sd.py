@@ -43,4 +43,4 @@ if __name__ == '__main__':
     while True:
         time.sleep(30)
         with open('/prom-rancher-sd-data/rancher.json', 'w') as config_file:
-            json.dump(get_monitoring_config(), config_file, indent=2)
+            print(json.dumps(get_monitoring_config(), indent=2),file=config_file)
