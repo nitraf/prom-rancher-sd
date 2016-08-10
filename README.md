@@ -1,6 +1,6 @@
 # Prometheus-Rancher Service Discovery Bridge
 
-# Forked from https://github.com/DanielDent/prom-rancher-sd - all credit to Daniel Dent
+### Forked from https://github.com/DanielDent/prom-rancher-sd - all credit to Daniel Dent
 
 This utility was created to integrate prometheus monitoring to application running in Docker containers.
 
