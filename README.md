@@ -4,7 +4,7 @@
 
 This utility was created to integrate prometheus monitoring to application running in Docker containers.
 
-prom-rancher-sd polls [Rancher's metadata service](http://docs.rancher.com/rancher/metadata-service/) and looks for containers with the `com.danieldent.cowhand.prom.port` label.
+prom-rancher-sd polls [Rancher's metadata service](http://docs.rancher.com/rancher/metadata-service/) and looks for containers with the `com.prometheus.monitoring` label set to `true`.
 
 A configuration file suitable for use by [Prometheus](http://prometheus.io/) is written to enable services to be monitored automatically. 
 
