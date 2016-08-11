@@ -2,9 +2,9 @@
 
 ### Forked from https://github.com/DanielDent/prom-rancher-sd - all credit to Daniel Dent
 
-This utility was created to integrate prometheus monitoring to application running in Docker containers.
+This utility was created to integrate prometheus monitoring to application & node_exporter running in Docker containers.
 
-prom-rancher-sd polls [Rancher's metadata service](http://docs.rancher.com/rancher/metadata-service/) and looks for containers with the `com.prometheus.monitoring` label set to `true`.
+prom-rancher-sd polls [Rancher's metadata service](http://docs.rancher.com/rancher/metadata-service/) and looks for containers with the `com.prometheus.monitoring` label set to `true` or part of the service `node-exporter`.
 
 A configuration file suitable for use by [Prometheus](http://prometheus.io/) is written to enable services to be monitored automatically. 
 
