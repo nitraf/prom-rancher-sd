@@ -33,7 +33,7 @@ def monitoring_config(service):
             'name': service['name'],
             'service_name': service['service_name'],
             'stack_name': service['stack_name'],
-            'metrics_path': service['labels']['com.prometheus.metricspath'] if 'com.prometheus.metricspath' in service['labels'] else '/metrics'
+            '__metrics_path__': service['labels']['com.prometheus.metricspath'] if 'com.prometheus.metricspath' in service['labels'] else '/metrics'
         },
        "host-uuid": service['host_uuid']
     }
