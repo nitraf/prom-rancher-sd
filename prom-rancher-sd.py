@@ -1,13 +1,20 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 # Copyright 2016 Daniel Dent (https://www.danieldent.com/)
 # Copyright 2016 Virgil Chereches (virgil.chereches@gmx.net)
+# Copyright 2019 Dzmitry Akunevich (dzmitry@akunevich.com)
 
 import time
 import urllib.parse
 import urllib.request
 import json
 import shutil
+import os
+
+
+outputFolder = os.getenv('OUTPUT_FOLDER', '/prom-rancher-sd-data').rstrip('/')
+discoveryTime = os.getenv('DISCOVERY_TIME', '5')
+defaultJobRegex = os.getenv('JOB_REGEX'.rstrip())
 
 
 def get_current_metadata_entry(entry):
@@ -15,52 +22,43 @@ def get_current_metadata_entry(entry):
         'User-Agent': "prom-rancher-sd/0.1",
         'Accept': 'application/json'
     }
-    req = urllib.request.Request('http://rancher-metadata.rancher.internal/2015-12-19/%s' % entry, headers=headers)
+    req = urllib.request.Request('http://rancher-metadata.rancher.internal/2016-07-29/%s' % entry, headers=headers)
     with urllib.request.urlopen(req) as response:
         return json.loads(response.read().decode('utf8 '))
+
 
 def is_monitored_service(service):
     # don't monitor container's that don't have IP yet
     if not 'primary_ip' in service:
         return False
-    return 'labels' in service and 'com.prometheus.monitoring' in service['labels'] and service['labels']['com.prometheus.monitoring'] == 'true'
+    #return 'labels' in service and 'com.prometheus.monitoring' in service['labels'] and service['labels']['com.prometheus.monitoring'] == 'true'
+    if defaultJobRegex:
+        if 'com.prometheus.job_name' in service['labels']:
+            return 'labels' in service and defaultJobRegex in service['labels']['com.prometheus.job_name']
 
-def is_node_exporter_service(service):
-    return service['service_name'] == 'node-exporter'
 
 def monitoring_config(service):
     return {
         "targets": [service['primary_ip'] + ':' + (service['labels']['com.prometheus.port'] if 'com.prometheus.port' in service['labels'] else '8083') ],
         "labels": {
             'instance': None,
-            'name': service['name'],
-            'service_name': service['service_name'],
-            'stack_name': service['stack_name'],
-            '__metrics_path__': service['labels']['com.prometheus.metricspath'] if 'com.prometheus.metricspath' in service['labels'] else '/metrics'
+            '__metrics_path__': service['labels']['com.prometheus.metricspath'] if 'com.prometheus.metricspath' in service['labels'] else '/metrics',
+            '__meta_rancher_container_name': service['name'],
+            '__meta_rancher_service_name': service['service_name'],
+            '__meta_rancher_stack ': service['stack_name'],
+            '__meta_rancher_job_name ': service['labels']['com.prometheus.job_name']
         },
        "host-uuid": service['host_uuid']
     }
 
-def node_monitoring_config(service):
-    return {
-        "targets": [service['primary_ip'] + ':' + '9100' ],
-        "labels": {
-            'instance': None,
-            'name': service['name'],
-            'service_name': service['service_name'],
-            'stack_name': service['stack_name'],
-        },
-       "host-uuid": service['host_uuid']
-    }
 
 def get_hosts_dict(hosts):
    return { x['uuid']:x['hostname'] for x in hosts }
 
+
 def get_monitoring_config():
     return list(map(monitoring_config, filter(is_monitored_service, get_current_metadata_entry('containers'))))
 
-def get_node_monitoring_config():
-    return list(map(node_monitoring_config, filter(is_node_exporter_service, get_current_metadata_entry('containers'))))
 
 def enrich_dict(dictionary,hostdict):
     assert 'host-uuid' in dictionary
@@ -69,6 +67,7 @@ def enrich_dict(dictionary,hostdict):
     dictionary['labels']['instance']=hostname
     dictionary.pop('host-uuid',None)
     return dictionary
+
 
 def write_config_file(filename,get_config_function):
     hostdict = get_hosts_dict(get_current_metadata_entry('hosts'))
@@ -79,9 +78,8 @@ def write_config_file(filename,get_config_function):
         print(json.dumps(newconfiglist, indent=2),file=config_file)
     shutil.move(tmpfile,filename)
 
+
 if __name__ == '__main__':
     while True:
-        time.sleep(5)
-        write_config_file('/prom-rancher-sd-data/rancher.json',get_monitoring_config)
-        write_config_file('/prom-rancher-sd-data/node_exporter.json',get_node_monitoring_config)
-
+        time.sleep(int('{0}'.format(discoveryTime)))
+        write_config_file('{0}/rancher.json'.format(outputFolder),get_monitoring_config)

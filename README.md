@@ -1,17 +1,19 @@
 # Prometheus-Rancher Service Discovery Bridge
 
-### Forked from https://github.com/DanielDent/prom-rancher-sd - all credit to Daniel Dent
+## Forked from [DanielDent/prom-rancher-sd](https://github.com/DanielDent/prom-rancher-sd) - all credit to Daniel Dent
 
 This utility was created to integrate prometheus monitoring to application & node_exporter running in Docker containers.
+prom-rancher-sd polls [Rancher's metadata service](http://docs.rancher.com/rancher/metadata-service/) and looks for containers with the `com.prometheus.monitoring` label set to `true`
 
-prom-rancher-sd polls [Rancher's metadata service](http://docs.rancher.com/rancher/metadata-service/) and looks for containers with the `com.prometheus.monitoring` label set to `true` or part of the service `node-exporter`.
+A configuration file suitable for use by [Prometheus](http://prometheus.io/) is written to enable services to be monitored automatically.
 
-A configuration file suitable for use by [Prometheus](http://prometheus.io/) is written to enable services to be monitored automatically. 
+The configuration file will be written to the directory /prom-rancher-sd-data by default, use the OUTPUT_FOLDER environment variable to change the directory.
 
+Interval that specifies how often the discovery process is repeated by default set to 5. Set DISCOVERY_TIME environment variable to chanage this setting.
 
-I changed a bit the cowhand approach by enriching the labels and assigning some sensible defaults. 
+I changed a bit the cowhand approach by enriching the labels and assigning some sensible defaults.
 
-One application running in container will be published in Prom configuration if it has the `com.prometheus.monitoring` label set to `true`. 
+One application running in container will be published in Prom configuration if it has the `com.prometheus.monitoring` label set to `true`.
 
 Prometheus will scrape `/metrics` (default value) or the value specified by `com.prometheus.metricspath` label via HTTP by connecting to the container's primary IP on the 8083 port (default) or on the port specified by the `com.prometheus.port` label.
 

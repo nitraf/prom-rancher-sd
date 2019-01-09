@@ -1,6 +1,12 @@
 FROM frolvlad/alpine-python3
 
-MAINTAINER Virgil Chereches <virgil.chereches@gmx.net>
+LABEL Maintainer "dzmitry@akunevich.com"
+LABEL Name "Dzmitry Akunevich"
+LABEL Version "1.0.2"
+
+RUN apk add --update -t deps wget ca-certificates curl jq \
+    && apk del --purge deps \
+    && rm /var/cache/apk/*
 
 RUN pip install urllib3
 
