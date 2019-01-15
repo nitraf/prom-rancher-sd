@@ -10,11 +10,13 @@ import urllib.request
 import json
 import shutil
 import os
-
+import re
 
 outputFolder = os.getenv('OUTPUT_FOLDER', '/prom-rancher-sd-data').rstrip('/')
 discoveryTime = os.getenv('DISCOVERY_TIME', '5')
-defaultJobRegex = os.getenv('JOB_REGEX'.rstrip())
+#JobRegexRaw = os.getenv('JOB_REGEX'.rstrip())
+
+JobRegex = re.compile(os.getenv('JOB_REGEX'.rstrip()))
 
 
 def get_current_metadata_entry(entry):
@@ -32,9 +34,10 @@ def is_monitored_service(service):
     if not 'primary_ip' in service:
         return False
     #return 'labels' in service and 'com.prometheus.monitoring' in service['labels'] and service['labels']['com.prometheus.monitoring'] == 'true'
-    if defaultJobRegex:
-        if 'com.prometheus.job_name' in service['labels']:
-            return 'labels' in service and defaultJobRegex in service['labels']['com.prometheus.job_name']
+    if 'com.prometheus.job_name' in service['labels']:
+        mo = JobRegex.search(service['labels']['com.prometheus.job_name'])
+        if mo:
+            return 'labels' in service and mo.group(0) in service['labels']['com.prometheus.job_name']
     else:
         return 'labels' in service and 'com.prometheus.job_name' in service['labels']
 
@@ -47,8 +50,8 @@ def monitoring_config(service):
             '__metrics_path__': service['labels']['com.prometheus.metricspath'] if 'com.prometheus.metricspath' in service['labels'] else '/metrics',
             '__meta_rancher_container_name': service['name'],
             '__meta_rancher_service_name': service['service_name'],
-            '__meta_rancher_stack ': service['stack_name'],
-            '__meta_rancher_job_name ': service['labels']['com.prometheus.job_name']
+            '__meta_rancher_stack': service['stack_name'],
+            '__meta_rancher_job_name': service['labels']['com.prometheus.job_name']
         },
        "host-uuid": service['host_uuid']
     }
