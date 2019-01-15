@@ -35,6 +35,8 @@ def is_monitored_service(service):
     if defaultJobRegex:
         if 'com.prometheus.job_name' in service['labels']:
             return 'labels' in service and defaultJobRegex in service['labels']['com.prometheus.job_name']
+    else:
+        return 'labels' in service and 'com.prometheus.job_name' in service['labels']
 
 
 def monitoring_config(service):
