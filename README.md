@@ -3,13 +3,31 @@
 ## Forked from [DanielDent/prom-rancher-sd](https://github.com/DanielDent/prom-rancher-sd) - all credit to Daniel Dent
 
 This utility was created to integrate prometheus monitoring to application & node_exporter running in Docker containers.
-prom-rancher-sd polls [Rancher's metadata service](http://docs.rancher.com/rancher/metadata-service/) and looks for containers with the `com.prometheus.monitoring` label set to `true`
+prom-rancher-sd polls [Rancher's metadata service](http://docs.rancher.com/rancher/metadata-service/) By default it generates config for services. In order to filter service name you can use **JOB_REGEX** environment variable. It supports regular expressions.
 
-A configuration file suitable for use by [Prometheus](http://prometheus.io/) is written to enable services to be monitored automatically.
+A configuration file suitable for use by [Prometheus](http://prometheus.io/) is written to enable services to be monitored automatically. Configuration file name is `rancher.json`. Here is and example of generated file:
 
-The configuration file will be written to the directory /prom-rancher-sd-data by default, use the OUTPUT_FOLDER environment variable to change the directory.
+```json
+[
+  {
+    "targets": [
+      "10.42.24.234:8085"
+    ],
+    "labels": {
+      "instance": "stretch",
+      "__metrics_path__": "/metrics",
+      "__meta_rancher_container_name": "test-stack-test-nginx-1",
+      "__meta_rancher_service_name": "test-nginx",
+      "__meta_rancher_stack": "test-stack",
+      "__meta_rancher_job_name": "stack-nginx"
+    }
+  }
+]
+```
 
-Interval that specifies how often the discovery process is repeated by default set to 5. Set DISCOVERY_TIME environment variable to chanage this setting.
+The configuration file will be written to the directory /prom-rancher-sd-data by default, use the **OUTPUT_FOLDER** environment variable to change the directory.
+
+Interval that specifies how often the discovery process is repeated by default set to 5. Set **DISCOVERY_TIME** environment variable to chanage this setting.
 
 I changed a bit the cowhand approach by enriching the labels and assigning some sensible defaults.
 
