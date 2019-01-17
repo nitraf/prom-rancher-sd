@@ -4,7 +4,7 @@ LABEL Maintainer "dzmitry@akunevich.com"
 LABEL Name "Dzmitry Akunevich"
 LABEL Version "1.0.2"
 
-RUN apk add --update -t deps wget ca-certificates curl jq \
+RUN apk add --update -t deps wget curl jq ca-certificates \
     && apk del --purge deps \
     && rm /var/cache/apk/*
 

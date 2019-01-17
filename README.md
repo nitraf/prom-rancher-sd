@@ -29,6 +29,8 @@ The configuration file will be written to the directory /prom-rancher-sd-data by
 
 Interval that specifies how often the discovery process is repeated by default set to 5. Set **DISCOVERY_TIME** environment variable to chanage this setting.
 
+Log level could be set via **LOGLEVEL** environment variable. Value of this variable could be INFO,WARN,DEBUG and so on.
+
 I changed a bit the cowhand approach by enriching the labels and assigning some sensible defaults.
 
 One application running in container will be published in Prom configuration if it has the `com.prometheus.monitoring` label set to `true`.
