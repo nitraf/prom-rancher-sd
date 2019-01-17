@@ -11,12 +11,29 @@ import json
 import shutil
 import os
 import re
+import logging
 
 outputFolder = os.getenv('OUTPUT_FOLDER', '/prom-rancher-sd-data').rstrip('/')
 discoveryTime = os.getenv('DISCOVERY_TIME', '5')
-#JobRegexRaw = os.getenv('JOB_REGEX'.rstrip())
+
 
 JobRegex = re.compile(os.getenv('JOB_REGEX'.rstrip()))
+
+
+def configure_logging():
+    """Enable and configure logging"""
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.INFO)
+    # create a file handler
+    handler = logging.FileHandler('prom-rancher-sd.log')
+    handler.setLevel(logging.INFO)
+
+    # create a logging format
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+
+    # add the handlers to the logger
+    logger.addHandler(handler)
 
 
 def get_current_metadata_entry(entry):
@@ -24,7 +41,10 @@ def get_current_metadata_entry(entry):
         'User-Agent': "prom-rancher-sd/0.1",
         'Accept': 'application/json'
     }
-    req = urllib.request.Request('http://rancher-metadata.rancher.internal/2016-07-29/%s' % entry, headers=headers)
+    try:
+        req = urllib.request.Request('http://rancher-metadata.rancher.internal/2016-07-29/%s' % entry, headers=headers)
+    except IOError, e:
+        logger.error('Failed to rancher metadata url ', exc_info=True)
     with urllib.request.urlopen(req) as response:
         return json.loads(response.read().decode('utf8 '))
 
@@ -32,17 +52,23 @@ def get_current_metadata_entry(entry):
 def is_monitored_service(service):
     # don't monitor container's that don't have IP yet
     if not 'primary_ip' in service:
+        logger.info('%s has no primary_ip', service)
         return False
-    #return 'labels' in service and 'com.prometheus.monitoring' in service['labels'] and service['labels']['com.prometheus.monitoring'] == 'true'
+    
     if 'com.prometheus.job_name' in service['labels']:
+        logger.info('%s has job_name set', service)
         mo = JobRegex.search(service['labels']['com.prometheus.job_name'])
         if mo:
+            logger.info('regex: %s succeeded', os.getenv('JOB_REGEX'.rstrip()))
+            logger.info('returning filtered job_name')
             return 'labels' in service and mo.group(0) in service['labels']['com.prometheus.job_name']
     else:
+        logger.info('returning unfiltered job_name')
         return 'labels' in service and 'com.prometheus.job_name' in service['labels']
 
 
 def monitoring_config(service):
+    logger.info('%s config created')
     return {
         "targets": [service['primary_ip'] + ':' + (service['labels']['com.prometheus.port'] if 'com.prometheus.port' in service['labels'] else '8083') ],
         "labels": {
@@ -79,12 +105,21 @@ def write_config_file(filename,get_config_function):
     configlist = get_config_function()
     newconfiglist = [ enrich_dict(x,hostdict) for x in configlist ]
     tmpfile = filename+'.temp'
-    with open(tmpfile, 'w') as config_file:
-        print(json.dumps(newconfiglist, indent=2),file=config_file)
+    
+    try:
+        #
+        with open(tmpfile, 'w') as config_file:
+            print(json.dumps(newconfiglist, indent=2),file=config_file)
+    except (SystemExit, KeyboardInterrupt):
+        raise
+    except Exception, e:
+        logger.error('Failed to open file', exc_info=True)
+    
     shutil.move(tmpfile,filename)
 
 
 if __name__ == '__main__':
+    configure_logging()
     while True:
         time.sleep(int('{0}'.format(discoveryTime)))
         write_config_file('{0}/rancher.json'.format(outputFolder),get_monitoring_config)
